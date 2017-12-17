@@ -1,4 +1,6 @@
 setwd("documents/files/umich/si544")
+
+#Lecture 8 ANOVA
 tomato = read.csv('data.csv')
 View(tomato)
 summary(tomato$TomatoMeter)
@@ -53,3 +55,43 @@ summary(model4)
 pizzasales$Competitor = relevel(pizzasales$Competitor, ref = "Yes")
 model4 = lm(Sales ~ Income + Competitor + Income*Competitor, data = pizzasales)
 
+# Lecture 9 Spurious Correlation
+## Correlation is not causation
+##Confounding Variables
+##quadratic term
+data$xsq = (data$x)**2
+model = lm(y ~ x + xsq, data = data)
+model = lm(y ~ x + I(x**2), data = data)
+##Studentize the residual /estimate the residual standard deviation excepte for the "outlier"
+student.del.resids = rstudent(model)
+##cook's distance
+cooks.distance(model)
+
+#Homework
+strikeout = read.csv("strikeouts3.csv")
+with(strikeout, plot(x = strikeout$strikeouts,y = strikeout$Salary, xlab = "Strikeouts", ylab = "Salary"))
+model = lm(Salary ~ strikeouts, data = strikeout)
+summary(model)
+##add confounding variable
+model = lm(Salary ~ strikeouts + hits, data = strikeout)
+cars = read.csv("cars.csv")
+with(cars, plot(x = cars$weight, y = cars$horse) )
+horse_model = lm(cars$horse ~ cars$weight, data = cars)
+##Residual plots 
+with(horse_model2, plot(fitted.values, residuals, pch = 16))
+abline(0,0)#increase spread: heteroscedacity
+## Add mean-centered quadratic term 
+cars$weight_certered = cars$weight - mean(cars$weight)
+horse_model2 = lm(horse ~ weight_certered + I(weight_certered**2), data = cars)
+## Studentized deleted residuals
+stud.del.resids = rstudent(horse_model)
+### Rescale fitted values
+zpred = (horse_model$fitted.values - mean(horse_model$fitted.values))/sd(horse_model$fitted.values)
+with(horse_model,plot(zpred, stud.del.resids,xlab = "Scaled fitted values", ylab = "Studentized Deleted Residuals",pch = 16))
+abline(0,0)
+## Cook's distance
+horse_model$model$cook = cooks.distance(horse_model)
+n = nrow(horse_model$model)
+outliers = subset(horse_model$model, cook>4/n)
+nrow(outliers)
+outliers
